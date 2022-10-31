@@ -28,7 +28,7 @@ from ..config import cfg
 
 
 class SUPR(nn.Module):
-    def __init__(self,path_model,num_betas=10):
+    def __init__(self,path_model,num_betas=10, device='cuda'):
         super(SUPR, self).__init__()
 
         if not os.path.exists(path_model):
@@ -40,16 +40,16 @@ class SUPR(nn.Module):
         self.num_betas = num_betas
 
         # Model sparse joints regressor, regresses joints location from a mesh
-        self.register_buffer('J_regressor', torch.cuda.FloatTensor(J_regressor))
+        self.register_buffer('J_regressor', torch.FloatTensor(J_regressor).to(device))
 
         # Model skinning weights
-        self.register_buffer('weights', torch.cuda.FloatTensor(model['weights']))
+        self.register_buffer('weights', torch.FloatTensor(model['weights']).to(device))
         # Model pose corrective blend shapes
-        self.register_buffer('posedirs', torch.cuda.FloatTensor(model['posedirs'].reshape((-1,300))))
+        self.register_buffer('posedirs', torch.FloatTensor(model['posedirs'].reshape((-1,model['posedirs'].shape[-1]))).to(device))
         # Mean Shape
-        self.register_buffer('v_template', torch.cuda.FloatTensor(model['v_template']))
+        self.register_buffer('v_template', torch.FloatTensor(model['v_template']).to(device))
         # Shape corrective blend shapes
-        self.register_buffer('shapedirs', torch.cuda.FloatTensor(np.array(model['shapedirs'][:,:,:num_betas])))
+        self.register_buffer('shapedirs', torch.FloatTensor(np.array(model['shapedirs'][:,:,:num_betas])).to(device))
         # Mesh traingles
         self.register_buffer('faces', torch.from_numpy(model['f'].astype(np.int64)))
         self.f = model['f']
@@ -77,10 +77,10 @@ class SUPR(nn.Module):
         v_template = self.v_template[None, :]
         shapedirs  = self.shapedirs.view(-1, self.num_betas)[None, :].expand(batch_size, -1, -1)
         beta = betas[:, :, None]
-        num_verts = v_shaped.shape[1]
-        batch_size = v_shaped.shape[0]
+        num_verts = v_template.shape[1]
         v_shaped = torch.matmul(shapedirs, beta).view(-1, num_verts, 3) + v_template
-        
+        batch_size = v_shaped.shape[0]
+
 
         num_joints = int(self.J_regressor.shape[0]/3)
 

@@ -17,7 +17,7 @@
 # Ahmed A. A. Osman
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("model/SUPR/README.md", "r") as fh:
     long_description = fh.read()
     
 REQUIREMENTS = ["numpy"]
