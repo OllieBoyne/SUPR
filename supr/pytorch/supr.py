@@ -30,7 +30,8 @@ from ..config import cfg
 class SUPR(nn.Module):
     def __init__(self,path_model,num_betas=10, device='cuda'):
         super(SUPR, self).__init__()
-
+        
+        self.path_model = path_model
         if not os.path.exists(path_model):
             raise RuntimeError('Path does not exist %s' % (path_model))
         import numpy as np
